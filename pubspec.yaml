@@ -1,7 +1,7 @@
 name: pynexa_schedule
 description: PyNexa Schedule - Plan smarter, stay consistent, and get things done.
 publish_to: 'none'
-version: 1.0.0+1
+version: 1.0.0+2
 
 environment:
   sdk: '>=3.5.0 <4.0.0'
@@ -20,8 +20,27 @@ dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: ^6.0.0
+  flutter_launcher_icons: ^0.14.4
+  flutter_native_splash: ^2.4.6
 
 flutter:
   uses-material-design: true
   assets:
     - assets/images/
+
+flutter_launcher_icons:
+  android: true
+  ios: false
+  image_path: assets/images/pynexa_schedule_icon.png
+  adaptive_icon_background: "#0A0A0F"
+  adaptive_icon_foreground: assets/images/pynexa_schedule_icon.png
+
+flutter_native_splash:
+  color: "#0A0A0F"
+  image: assets/images/pynexa_schedule_splash.png
+  android: true
+  ios: false
+  fullscreen: true
+  android_12:
+    color: "#0A0A0F"
+    image: assets/images/pynexa_schedule_icon.png
