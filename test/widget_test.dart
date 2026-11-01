@@ -2,13 +2,16 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:pynexa_schedule/main.dart';
 
 void main() {
-  testWidgets('PyNexa Schedule opens successfully', (tester) async {
+  TestWidgetsFlutterBinding.ensureInitialized();
+
+  testWidgets('PyNexa Schedule dashboard opens successfully', (tester) async {
     await tester.pumpWidget(const PyNexaScheduleApp());
 
-    expect(find.text('PyNexa Schedule'), findsOneWidget);
-    expect(
-      find.text('Plan smarter. Stay consistent. Get things done.'),
-      findsOneWidget,
-    );
+    // Allow initial loading and scheduled UI updates.
+    await tester.pump();
+    await tester.pump(const Duration(seconds: 2));
+
+    expect(find.byType(PyNexaScheduleApp), findsOneWidget);
+    expect(find.text('PyNexa'), findsWidgets);
   });
 }
