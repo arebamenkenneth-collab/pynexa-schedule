@@ -12,7 +12,6 @@ jobs:
   build:
     name: Build Android APK
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -32,11 +31,43 @@ jobs:
       - name: Generate Android project
         run: flutter create --platforms=android --org com.pynexa.schedule .
 
+      - name: Enable Android core library desugaring
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          path = Path("android/app/build.gradle.kts")
+          content = path.read_text()
+          target = "targetCompatibility = JavaVersion.VERSION_17"
+
+          if "isCoreLibraryDesugaringEnabled = true" not in content:
+              if target not in content:
+                  raise SystemExit("Could not find Android compileOptions configuration.")
+              content = content.replace(
+                  target,
+                  target + "\n        isCoreLibraryDesugaringEnabled = true",
+                  1,
+              )
+
+          if 'coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:' not in content:
+              content += (
+                  '\n\ndependencies {\n'
+                  '    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.4")\n'
+                  '}\n'
+              )
+
+          path.write_text(content)
+          print("Desugaring enabled.")
+          PY
+
       - name: Install dependencies
         run: flutter pub get
 
       - name: Analyze Flutter code
         run: flutter analyze
+
+      - name: Run widget tests
+        run: flutter test
 
       - name: Build release APK
         run: flutter build apk --release
