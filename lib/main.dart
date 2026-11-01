@@ -1022,7 +1022,7 @@ class _TaskEditorSheetState extends State<TaskEditorSheet> {
                 children: [
                   Expanded(
                     child: DropdownButtonFormField<String>(
-                      value: _category,
+                      initialValue: _category,
                       decoration: const InputDecoration(labelText: 'Category'),
                       items: _categories
                           .map((item) => DropdownMenuItem(
@@ -1038,7 +1038,7 @@ class _TaskEditorSheetState extends State<TaskEditorSheet> {
                   const SizedBox(width: 12),
                   Expanded(
                     child: DropdownButtonFormField<String>(
-                      value: _priority,
+                      initialValue: _priority,
                       decoration: const InputDecoration(labelText: 'Priority'),
                       items: ['Low', 'Medium', 'High']
                           .map((item) => DropdownMenuItem(
