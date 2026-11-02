@@ -64,16 +64,18 @@ jobs:
               if count != 1:
                   raise SystemExit("Could not find compileOptions block")
 
-          if "desugar_jdk_libs" not in text:
-              text, count = re.subn(
-                  r"(dependencies\s*\{)",
-                  r"\1\n    " + dependency,
-                  text,
-                  count=1
-              )
-              if count != 1:
-                  raise SystemExit("Could not find dependencies block")
-
+if "desugar_jdk_libs" not in text:
+    if re.search(r"(?m)^\s*dependencies\s*\{", text):
+        text, count = re.subn(
+            r"(dependencies\s*\{)",
+            r"\1\n    " + dependency,
+            text,
+            count=1
+        )
+        if count != 1:
+            raise SystemExit("Could not update dependencies block")
+    else:
+        text += "\n\ndependencies {\n    " + dependency + "\n}\n"
           path.write_text(text)
           print(f"Desugaring configured in {path}")
           PY
