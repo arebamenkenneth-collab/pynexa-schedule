@@ -1,8 +1,8 @@
-import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'models/task.dart';
+import 'services/storage_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -11,49 +11,6 @@ void main() async {
 
 const Color brandPurple = Color(0xFF8B5CF6);
 const Color darkBackground = Color(0xFF0A0A0F);
-
-class ScheduleTask {
-  final String id;
-  String title;
-  String notes;
-  String category;
-  String priority;
-  DateTime dueDate;
-  bool completed;
-
-  ScheduleTask({
-    required this.id,
-    required this.title,
-    required this.notes,
-    required this.category,
-    required this.priority,
-    required this.dueDate,
-    this.completed = false,
-  });
-
-  Map<String, dynamic> toJson() => {
-        'id': id,
-        'title': title,
-        'notes': notes,
-        'category': category,
-        'priority': priority,
-        'dueDate': dueDate.toIso8601String(),
-        'completed': completed,
-      };
-
-  factory ScheduleTask.fromJson(Map<String, dynamic> json) {
-    return ScheduleTask(
-      id: json['id'] as String,
-      title: json['title'] as String? ?? '',
-      notes: json['notes'] as String? ?? '',
-      category: json['category'] as String? ?? 'Personal',
-      priority: json['priority'] as String? ?? 'Medium',
-      dueDate: DateTime.tryParse(json['dueDate'] as String? ?? '') ??
-          DateTime.now(),
-      completed: json['completed'] as bool? ?? false,
-    );
-  }
-}
 
 class PyNexaScheduleApp extends StatefulWidget {
   const PyNexaScheduleApp({super.key});
@@ -145,7 +102,7 @@ class ScheduleHomePage extends StatefulWidget {
 }
 
 class _ScheduleHomePageState extends State<ScheduleHomePage> {
-  static const String _storageKey = 'pynexa_schedule_tasks_v1';
+  final StorageService _storage = StorageService();
 
   final List<ScheduleTask> _tasks = [];
   bool _loading = true;
@@ -159,22 +116,14 @@ class _ScheduleHomePageState extends State<ScheduleHomePage> {
     _loadTasks();
   }
 
+
   Future<void> _loadTasks() async {
     try {
-      final prefs = await SharedPreferences.getInstance();
-      final raw = prefs.getString(_storageKey);
-      if (raw != null) {
-        final decoded = jsonDecode(raw) as List<dynamic>;
-        _tasks
-          ..clear()
-          ..addAll(decoded.map(
-            (item) => ScheduleTask.fromJson(
-              Map<String, dynamic>.from(item as Map),
-            ),
-          ));
-      }
-    } catch (_) {
-      // If stored data is invalid, the app still opens safely.
+      _tasks
+        ..clear()
+        ..addAll(await _storage.loadTasks());
+    } catch (error) {
+      debugPrint('Task loading failed: $error');
     }
 
     if (mounted) {
@@ -183,11 +132,7 @@ class _ScheduleHomePageState extends State<ScheduleHomePage> {
   }
 
   Future<void> _saveTasks() async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(
-      _storageKey,
-      jsonEncode(_tasks.map((task) => task.toJson()).toList()),
-    );
+    await _storage.saveTasks(_tasks);
   }
 
   List<ScheduleTask> get _visibleTasks {
@@ -953,7 +898,12 @@ class _TaskEditorSheetState extends State<TaskEditorSheet> {
       category: _category,
       priority: _priority,
       dueDate: _dueDate,
+      startTime: existing?.startTime,
       completed: existing?.completed ?? false,
+      recurrence: existing?.recurrence ?? "Never",
+      repeatDays: existing == null ? [] : List<int>.from(existing.repeatDays),
+      subtasks: existing == null ? [] : List<String>.from(existing.subtasks),
+      subtaskDone: existing == null ? [] : List<bool>.from(existing.subtaskDone),
     );
 
     Navigator.of(context).pop(task);
