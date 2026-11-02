@@ -32,6 +32,52 @@ jobs:
       - name: Generate Android project
         run: flutter create --platforms=android --org com.pynexa.schedule .
 
+      - name: Configure Android desugaring
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+
+          kts = Path("android/app/build.gradle.kts")
+          groovy = Path("android/app/build.gradle")
+          path = kts if kts.exists() else groovy
+
+          if not path.exists():
+              raise SystemExit("Android app Gradle file not found")
+
+          text = path.read_text()
+
+          if path.suffix == ".kts":
+              enabled = "isCoreLibraryDesugaringEnabled = true"
+              dependency = 'coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.4")'
+          else:
+              enabled = "coreLibraryDesugaringEnabled true"
+              dependency = "coreLibraryDesugaring 'com.android.tools:desugar_jdk_libs:2.1.4'"
+
+          if "coreLibraryDesugaringEnabled" not in text:
+              text, count = re.subn(
+                  r"(compileOptions\s*\{)",
+                  r"\1\n        " + enabled,
+                  text,
+                  count=1
+              )
+              if count != 1:
+                  raise SystemExit("Could not find compileOptions block")
+
+          if "desugar_jdk_libs" not in text:
+              text, count = re.subn(
+                  r"(dependencies\s*\{)",
+                  r"\1\n    " + dependency,
+                  text,
+                  count=1
+              )
+              if count != 1:
+                  raise SystemExit("Could not find dependencies block")
+
+          path.write_text(text)
+          print(f"Desugaring configured in {path}")
+          PY
+
       - name: Install dependencies
         run: flutter pub get
 
